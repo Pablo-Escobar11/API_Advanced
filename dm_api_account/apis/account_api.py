@@ -4,8 +4,6 @@ from rest_client.client import RestClient
 
 
 class AccountApi(RestClient):
-    def __init__(self, host, headers=None):
-        super().__init__(host, headers)
 
     def post_v1_account(self, json_data):
         """
