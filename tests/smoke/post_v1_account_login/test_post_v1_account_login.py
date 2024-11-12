@@ -1,14 +1,11 @@
 import time
 from datetime import datetime
 from json import loads
-
-from dm_api_account.apis.account_api import AccountApi
-from dm_api_account.apis.login_api import LoginApi
-from api_mailhog.apis.mail_hog_api import MailhogApi
 import structlog
 from rest_client.configuration import Configuration as MailHogConfiguration
 from rest_client.configuration import Configuration as DmApiConfiguration
-
+from services.dm_api_account import DMApiAccount
+from services.api_mailhog import MailHogapi
 structlog.configure(
     processors=[structlog.processors.JSONRenderer(indent=4,
                                                   ensure_ascii=True,
@@ -22,9 +19,8 @@ def test_post_v1_account_login():
     mail_configuration = MailHogConfiguration(host='http://5.63.153.31:5025')
     dm_api_configuration = DmApiConfiguration(host='http://5.63.153.31:5051', disable_log=False)
     # Подготовка данных
-    account_api = AccountApi(configuration=dm_api_configuration)
-    login_api = LoginApi(configuration=dm_api_configuration)
-    mail_hog_api = MailhogApi(configuration=mail_configuration)
+    account = DMApiAccount(configuration=dm_api_configuration)
+    mail_hog = MailHogapi(configuration=mail_configuration)
 
     current_time = datetime.now()
     formatted_time = current_time.strftime("%m_%d_%H_%M_%S")
@@ -40,11 +36,11 @@ def test_post_v1_account_login():
 
     time.sleep(1)
     # Регистрация пользвателя
-    response = account_api.post_v1_account(json_data=json_data)
+    response = account.account_api.post_v1_account(json_data=json_data)
     assert response.status_code == 201, f"Пользователь не был создан, {response.json()}"
 
     # Получение письма
-    response = mail_hog_api.get_api_v2_messages()
+    response = mail_hog.mailhog_api.get_api_v2_messages()
     assert response.status_code == 200, f"Письма не были получены, {response.json()}"
 
     # Получение токена
@@ -52,7 +48,7 @@ def test_post_v1_account_login():
     assert register_token is not None, f"Токен для пользователя {login} не был получен"
 
     # Активация пользователя
-    response = account_api.put_v1_account_token(token=register_token)
+    response = account.account_api.put_v1_account_token(token=register_token)
     assert response.status_code == 200, f'Пользователь не активен {response.json()}'
 
     # Логин пользвателя в систему
@@ -62,14 +58,14 @@ def test_post_v1_account_login():
         'rememberMe': True,
     }
 
-    response = login_api.post_v1_account_login(json_data=json_data)
+    response = account.login_api.post_v1_account_login(json_data=json_data)
     assert response.status_code == 200, f'Пользователь не авторизован {response.json()}'
 
     # Получение auth token
     auth_token = get_auth_token_by_login(response)
 
     # Выход с аккаунта
-    response = login_api.delete_v1_account_login(auth_token=auth_token)
+    response = account.login_api.delete_v1_account_login(auth_token=auth_token)
     assert response.status_code == 204, f"Выход не был выполнен, {response.json()}"
 
 

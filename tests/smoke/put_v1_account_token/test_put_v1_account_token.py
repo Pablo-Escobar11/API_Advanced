@@ -7,6 +7,8 @@ from api_mailhog.apis.mail_hog_api import MailhogApi
 import structlog
 from rest_client.configuration import Configuration as MailHogConfiguration
 from rest_client.configuration import Configuration as DmApiConfiguration
+from services.dm_api_account import DMApiAccount
+from services.api_mailhog import MailHogapi
 
 structlog.configure(
     processors=[structlog.processors.JSONRenderer(indent=4,
@@ -21,8 +23,8 @@ def test_put_v1_account_token():
     mail_configuration = MailHogConfiguration(host='http://5.63.153.31:5025')
     dm_api_configuration = DmApiConfiguration(host='http://5.63.153.31:5051', disable_log=False)
     # Подготовка данных
-    account_api = AccountApi(configuration=dm_api_configuration)
-    mail_hog_api = MailhogApi(configuration=mail_configuration)
+    account = DMApiAccount(configuration=dm_api_configuration)
+    mail_hog = MailHogapi(configuration=mail_configuration)
 
     current_time = datetime.now()
     formatted_time = current_time.strftime("%m_%d_%H_%M_%S")
@@ -39,12 +41,12 @@ def test_put_v1_account_token():
     time.sleep(1)
     # Регистрация пользоателя
 
-    response = account_api.post_v1_account(json_data=json_data)
+    response = account.account_api.post_v1_account(json_data=json_data)
     assert response.status_code == 201, f"Пользователь не был создан, {response.json()}"
 
     # Получения письма
 
-    response = mail_hog_api.get_api_v2_messages()
+    response = mail_hog.mailhog_api.get_api_v2_messages()
     assert response.status_code == 200, f"Письма не были получены, {response.json()}"
 
     # Получить токен !!!!!!!!!!!
@@ -52,7 +54,7 @@ def test_put_v1_account_token():
     assert token is not None, f"Токен для пользователя {login} не был получен"
 
     # Активация пользователя
-    response = account_api.put_v1_account_token(token=token)
+    response = account.account_api.put_v1_account_token(token=token)
     assert response.status_code == 200, f'Пользователь не активен {response.json()}'
 
 

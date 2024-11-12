@@ -1,13 +1,11 @@
 import time
 from json import loads
 from datetime import datetime
-
-from dm_api_account.apis.account_api import AccountApi
-from dm_api_account.apis.login_api import LoginApi
-from api_mailhog.apis.mail_hog_api import MailhogApi
 import structlog
 from rest_client.configuration import Configuration as MailHogConfiguration
 from rest_client.configuration import Configuration as DmApiConfiguration
+from services.dm_api_account import DMApiAccount
+from services.api_mailhog import MailHogapi
 structlog.configure(
     processors=[structlog.processors.JSONRenderer(indent=4,
                                                   ensure_ascii=True,
@@ -22,9 +20,8 @@ def test_v1_account():
     dm_api_configuration = DmApiConfiguration(host='http://5.63.153.31:5051', disable_log=False)
 
     # Регистрация пользователя!!!!!!!!!!!!!!!!!!!!!!!!!
-    account_api = AccountApi(configuration=dm_api_configuration)
-    login_api = LoginApi(configuration=dm_api_configuration)
-    mail_hog_api = MailhogApi(configuration=mail_configuration)
+    account = DMApiAccount(configuration=dm_api_configuration)
+    mail_hog = MailHogapi(configuration=mail_configuration)
 
     current_time = datetime.now()
     formatted_time = current_time.strftime("%m_%d_%H_%M_%S")
@@ -38,12 +35,12 @@ def test_v1_account():
         'password': password,
     }
     time.sleep(1)
-    response = account_api.post_v1_account(json_data=json_data)
+    response = account.account_api.post_v1_account(json_data=json_data)
     assert response.status_code == 201, f"Пользователь не был создан, {response.json()}"
 
     # Получить письма !!!!!!!!!!!!!!!!!!!!!!!!
 
-    response = mail_hog_api.get_api_v2_messages()
+    response = mail_hog.mailhog_api.get_api_v2_messages()
     assert response.status_code == 200, f"Письма не были получены, {response.json()}"
 
     # Получить токен !!!!!!!!!!!
@@ -51,7 +48,7 @@ def test_v1_account():
     assert token is not None, f"Токен для пользователя {login} не был получен"
 
     # Активация пользователя
-    response = account_api.put_v1_account_token(token=token)
+    response = account.account_api.put_v1_account_token(token=token)
     assert response.status_code == 200, f'Пользователь не активен {response.json()}'
 
     # Авторизация !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -62,13 +59,13 @@ def test_v1_account():
         'rememberMe': True,
     }
 
-    response = login_api.post_v1_account_login(json_data=json_data)
+    response = account.login_api.post_v1_account_login(json_data=json_data)
     assert response.status_code == 200, f'Пользователь не авторизован {response.json()}'
 
     # Получение данных о пользователе
 
     aut_token = get_auth_token_by_login(response)
-    response = account_api.get_v1_account(auth_token=aut_token)
+    response = account.account_api.get_v1_account(auth_token=aut_token)
     assert response.status_code == 200, f"Данные о пользователи не были получены {response.json()}"
 
     # Сброс пароля пользователя
@@ -76,10 +73,10 @@ def test_v1_account():
         'login': login,
         'email': email
     }
-    response = account_api.post_v1_account_password(json_data=json_data)
+    response = account.account_api.post_v1_account_password(json_data=json_data)
     assert response.status_code == 200
 
-    response = mail_hog_api.get_api_v2_messages()
+    response = mail_hog.mailhog_api.get_api_v2_messages()
     reset_token = get_reset_token_by_login(login=login, response=response)
 
     # Сменапароля пользователя
@@ -89,11 +86,11 @@ def test_v1_account():
         "oldPassword": password,
         "newPassword": "Qwert123"
     }
-    response = account_api.put_v1_account_password(json_data=json_data)
+    response = account.account_api.put_v1_account_password(json_data=json_data)
     assert response.status_code == 200, f"Пароль не был изменен, {response.json()}"
 
     # Выход
-    response = login_api.delete_v1_account_login(auth_token=aut_token)
+    response = account.login_api.delete_v1_account_login(auth_token=aut_token)
     assert response.status_code == 204, f"Выход не был выполнен, {response.json()}"
 
 
