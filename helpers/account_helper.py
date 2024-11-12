@@ -1,0 +1,70 @@
+import time
+from json import loads
+
+from services.dm_api_account import DMApiAccount
+from services.api_mailhog import MailHogapi
+
+
+class AccountHelper:
+    def __init__(self, dm_account_api: DMApiAccount, mail_hog: MailHogapi):
+        self.dm_account_api = dm_account_api
+        self.mail_hog = mail_hog
+
+    def register_new_user(self, login: str, password: str, email: str):
+        json_data = {
+            'login': login,
+            'email': email,
+            'password': password,
+        }
+        time.sleep(1)
+        # Регистрация пользователя!!!!!!!!!!!!!!!!!!!!!!!!!
+        response = self.dm_account_api.account_api.post_v1_account(json_data=json_data)
+        assert response.status_code == 201, f"Пользователь не был создан, {response.json()}"
+
+        # Получить письма !!!!!!!!!!!!!!!!!!!!!!!!
+        response = self.mail_hog.mailhog_api.get_api_v2_messages()
+        assert response.status_code == 200, f"Письма не были получены, {response.json()}"
+
+        # Получить токен !!!!!!!!!!!
+        activate_token = self.get_activation_token_by_login(response=response, login=login)
+        assert activate_token is not None, f"Токен для пользователя {login} не был получен"
+
+        # Активация пользователя
+        response = self.dm_account_api.account_api.put_v1_account_token(token=activate_token)
+        assert response.status_code == 200, f'Пользователь не активен {response.json()}'
+        return response
+
+    def user_login(self, login: str, password: str, remember_me: bool = True):
+        # Авторизация !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        json_data = {
+            'login': login,
+            'password': password,
+            'rememberMe': remember_me,
+        }
+
+        response = self.dm_account_api.login_api.post_v1_account_login(json_data=json_data)
+        assert response.status_code == 200, f'Пользователь не авторизован {response.json()}'
+        return response
+
+    def get_user_info(self):
+        auth_token = self.get_auth_token_by_login(self.user_login())
+        response = self.dm_account_api.account_api.get_v1_account(auth_token=auth_token)
+        return response
+
+    @staticmethod
+    def get_activation_token_by_login(login, response):
+        token = None
+        for item in response.json()['items']:
+            user_data = loads(item['Content']['Body'])
+            user_login = user_data['Login']
+            if user_login == login:
+                token = user_data['ConfirmationLinkUrl'].split('/')[-1]
+            return token
+
+    @staticmethod
+    def get_auth_token_by_login(response):
+        if 'X-Dm-Auth-Token' in response.headers:
+            return response.headers['X-Dm-Auth-Token']
+        else:
+            print('There is no token in headers')
