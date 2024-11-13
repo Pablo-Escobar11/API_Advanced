@@ -21,12 +21,8 @@ class AccountHelper:
         response = self.dm_account_api.account_api.post_v1_account(json_data=json_data)
         assert response.status_code == 201, f"Пользователь не был создан, {response.json()}"
 
-        # Получить письма !!!!!!!!!!!!!!!!!!!!!!!!
-        response = self.mail_hog.mailhog_api.get_api_v2_messages()
-        assert response.status_code == 200, f"Письма не были получены, {response.json()}"
-
         # Получить токен !!!!!!!!!!!
-        activate_token = self.get_activation_token_by_login(response=response, login=login)
+        activate_token = self.get_activation_token_by_login(login=login)
         assert activate_token is not None, f"Токен для пользователя {login} не был получен"
 
         # Активация пользователя
@@ -64,7 +60,7 @@ class AccountHelper:
 
         # Получение токена
         response = self.mail_hog.mailhog_api.get_api_v2_messages()
-        reset_token = self.get_reset_token_by_login(response=response, login=login)
+        reset_token = self.get_reset_password_token_by_login(response=response, login=login)
 
         # Смена пароля пользователя
 
@@ -121,8 +117,8 @@ class AccountHelper:
         assert response.status_code == 204, f"Выход не был выполнен, {response.json()}"
         return response
 
-    @staticmethod
-    def get_activation_token_by_login(login, response):
+    def get_activation_token_by_login(self, login):
+        response = self.mail_hog.mailhog_api.get_api_v2_messages()
         token = None
         for item in response.json()['items']:
             user_data = loads(item['Content']['Body'])
@@ -139,7 +135,7 @@ class AccountHelper:
             print('There is no token in headers')
 
     @staticmethod
-    def get_reset_token_by_login(login, response):
+    def get_reset_password_token_by_login(login, response):
         token = None
         for item in response.json()['items']:
             user_data = loads(item['Content']['Body'])
