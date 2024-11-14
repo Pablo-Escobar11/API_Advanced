@@ -31,7 +31,6 @@ def test_put_v1_account_email():
     email = f'{login}@mail.ru'
     password = 'Qwerty123'
     new_email = f'new{email}'
-    time.sleep(1)
 
     time.sleep(1)
     # Регистрация пользвателя
