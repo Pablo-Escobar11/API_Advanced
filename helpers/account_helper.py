@@ -10,7 +10,7 @@ class AccountHelper:
         self.dm_account_api = dm_account_api
         self.mail_hog = mail_hog
 
-    def register_new_user(self, login: str, password: str, email: str):
+    def register_new_user(self, login: str, password: str, email: str, activated: bool = True):
         json_data = {
             'login': login,
             'email': email,
@@ -25,9 +25,11 @@ class AccountHelper:
         activate_token = self.get_activation_token_by_login(login=login)
         assert activate_token is not None, f"Токен для пользователя {login} не был получен"
 
+
         # Активация пользователя
-        response = self.dm_account_api.account_api.put_v1_account_token(token=activate_token)
-        assert response.status_code == 200, f'Пользователь не активен {response.json()}'
+        if activated:
+            response = self.dm_account_api.account_api.put_v1_account_token(token=activate_token)
+            assert response.status_code == 200, f'Пользователь не активен {response.json()}'
         return response
 
     def user_login(self, login: str, password: str, remember_me: bool = True):
@@ -40,7 +42,6 @@ class AccountHelper:
         }
 
         response = self.dm_account_api.login_api.post_v1_account_login(json_data=json_data)
-        assert response.status_code == 200, f'Пользователь не авторизован {response.json()}'
         return response
 
     def get_user_info(self, login: str, password: str):
@@ -85,17 +86,6 @@ class AccountHelper:
         assert response.status_code == 200, f'Запрос на сброс почты не отправлен, {response.json()}'
         return response
 
-    def login_user_to_the_system_without_confirm_email(self, login, password, remember_me=True):
-        json_data = {
-            'login': login,
-            'password': password,
-            'rememberMe': remember_me,
-        }
-
-        response = self.dm_account_api.login_api.post_v1_account_login(json_data=json_data)
-        assert response.status_code == 403, f'Пользователь не авторизован {response.json()}'
-        return response
-
     def get_messages_and_confirm_new_email(self, login, new_email):
         # Получение письма
         response = self.mail_hog.mailhog_api.get_api_v2_messages()
@@ -109,10 +99,7 @@ class AccountHelper:
         assert response.status_code == 200, f"Почта не иизменена, {response.json()}"
         return response
 
-    def logaut_from_the_system(self, password, login):
-        response = self.user_login(password=password, login=login)
-        auth_token = self.get_auth_token_by_login(response=response)
-
+    def logaut_from_the_system(self, auth_token):
         response = self.dm_account_api.login_api.delete_v1_account_login(auth_token=auth_token)
         assert response.status_code == 204, f"Выход не был выполнен, {response.json()}"
         return response
@@ -127,8 +114,7 @@ class AccountHelper:
                 token = user_data['ConfirmationLinkUrl'].split('/')[-1]
             return token
 
-    @staticmethod
-    def get_auth_token_by_login(response):
+    def get_auth_token_by_login(self, response):
         if 'X-Dm-Auth-Token' in response.headers:
             return response.headers['X-Dm-Auth-Token']
         else:
