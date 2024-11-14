@@ -34,6 +34,7 @@ def test_v1_account():
     email = f'{login}@mail.ru'
     password = 'Qwerty123'
     new_password = 'Qwert4321'
+    time.sleep(1)
 
     account_helper.register_new_user(login=login, password=password, email=email)
 
