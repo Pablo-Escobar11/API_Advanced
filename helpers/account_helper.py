@@ -3,11 +3,11 @@ from json import loads
 
 from services.dm_api_account import DMApiAccount
 from services.api_mailhog import MailHogapi
-from retrying import retry
-
-
-def retry_if_result_none(result):
-    return result is None
+# from retrying import retry
+#
+#
+# def retry_if_result_none(result):
+#     return result is None
 
 
 def retrier(func):
@@ -123,8 +123,8 @@ class AccountHelper:
         response = self.dm_account_api.login_api.delete_v1_account_login(auth_token=auth_token)
         assert response.status_code == 204, f"Выход не был выполнен, {response.json()}"
         return response
-    # @retrier
-    @retry(stop_max_attempt_number=5, retry_on_result=retry_if_result_none, wait_fixed=1000)
+    @retrier
+    # @retry(stop_max_attempt_number=5, retry_on_result=retry_if_result_none, wait_fixed=1000)
     def get_activation_token_by_login(self, login):
         response = self.mail_hog.mailhog_api.get_api_v2_messages()
         token = None
