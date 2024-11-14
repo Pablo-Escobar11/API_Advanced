@@ -10,7 +10,7 @@ class AccountHelper:
         self.dm_account_api = dm_account_api
         self.mail_hog = mail_hog
 
-    def register_new_user(self, login: str, password: str, email: str):
+    def register_new_user(self, login: str, password: str, email: str, activated: bool = True):
         json_data = {
             'login': login,
             'email': email,
@@ -29,9 +29,11 @@ class AccountHelper:
         activate_token = self.get_activation_token_by_login(response=response, login=login)
         assert activate_token is not None, f"Токен для пользователя {login} не был получен"
 
+
         # Активация пользователя
-        response = self.dm_account_api.account_api.put_v1_account_token(token=activate_token)
-        assert response.status_code == 200, f'Пользователь не активен {response.json()}'
+        if activated:
+            response = self.dm_account_api.account_api.put_v1_account_token(token=activate_token)
+            assert response.status_code == 200, f'Пользователь не активен {response.json()}'
         return response
 
     def user_login(self, login: str, password: str, remember_me: bool = True):

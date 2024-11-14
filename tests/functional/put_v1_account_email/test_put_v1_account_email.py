@@ -18,7 +18,7 @@ structlog.configure(
 )
 
 
-def test_v1_account():
+def test_put_v1_account():
     mail_configuration = MailHogConfiguration(host='http://5.63.153.31:5025')
     dm_api_configuration = DmApiConfiguration(host='http://5.63.153.31:5051', disable_log=False)
     # Подготовка данных
