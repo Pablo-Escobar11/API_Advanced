@@ -3,11 +3,11 @@ from json import loads
 
 from services.dm_api_account import DMApiAccount
 from services.api_mailhog import MailHogapi
-from retrying import retry
+# from retrying import retry
 
 
-def retry_if_result_none(result):
-    return result is None
+# def retry_if_result_none(result):
+#     return result is None
 
 
 def retrier(func):
