@@ -34,8 +34,10 @@ def test_post_v1_account_login():
     # Регистрация пользователя и вход в аккаунт
     account_helper = AccountHelper(dm_account_api=account, mail_hog=mail_hog)
     account_helper.register_new_user(login=login, password=password, email=email)
-    account_helper.user_login(login=login, password=password)
+    response = account_helper.user_login(login=login, password=password)
+    assert response.status_code == 200, f'Пользователь не авторизован {response.json()}'
+    auth_token = account_helper.get_auth_token_by_login(response=response)
 
     # Выход с аккаунта
-    account_helper.logaut_from_the_system(login=login, password=password)
+    account_helper.logaut_from_the_system(auth_token=auth_token)
 

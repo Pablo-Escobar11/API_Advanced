@@ -48,8 +48,11 @@ def test_v1_account():
 
     # Вход с новым паролем
 
-    account_helper.user_login(login=login, password=new_password)
+    response = account_helper.user_login(login=login, password=new_password)
+    assert response.status_code == 200, f'Пользователь не авторизован {response.json()}'
+    auth_token = account_helper.get_auth_token_by_login(response=response)
+
 
     # Выход
-    account_helper.logaut_from_the_system(password=new_password, login=login)
+    account_helper.logaut_from_the_system(auth_token=auth_token)
 

@@ -18,7 +18,7 @@ structlog.configure(
 )
 
 
-def test_put_v1_account():
+def test_put_v1_account_email():
     mail_configuration = MailHogConfiguration(host='http://5.63.153.31:5025')
     dm_api_configuration = DmApiConfiguration(host='http://5.63.153.31:5051', disable_log=False)
     # Подготовка данных
@@ -35,20 +35,20 @@ def test_put_v1_account():
     time.sleep(1)
     # Регистрация пользвателя
     account_helper = AccountHelper(dm_account_api=account, mail_hog=mail_hog)
-    account_helper.register_new_user(login=login, password=password, email=email)
-    account_helper.user_login(login=login, password=password)
-
+    account_helper.register_new_user(login=login, password=password, email=email, activated=False)
 
     # Смена почты
     account_helper.change_register_user_email(new_email=new_email, password=password, login=login)
 
     # Логин пользвателя в систему после смены почты
-    account_helper.login_user_to_the_system_without_confirm_email(login=login, password=password)
-
+    response = account_helper.user_login(login=login, password=password)
+    assert response.status_code == 403, f'Пользователь авторизован {response.json()}'
 
     # Получение письма и подтверждение новой почты
     account_helper.get_messages_and_confirm_new_email(login=login, new_email=new_email)
 
     # Логин пользвателя в систему
-    account_helper.user_login(login=login, password=password)
+    response = account_helper.user_login(login=login, password=password)
+
+    assert response.status_code == 200, f'Пользователь не авторизован {response.json()}'
 
