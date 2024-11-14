@@ -3,6 +3,27 @@ from json import loads
 
 from services.dm_api_account import DMApiAccount
 from services.api_mailhog import MailHogapi
+from retrying import retry
+
+
+def retry_if_result_none(result):
+    return result is None
+
+
+def retrier(func):
+    def wrapper(*args, **kwargs):
+        token = None
+        count = 0
+        while token is None:
+            token = func(*args, **kwargs)
+            count += 1
+            if count == 5:
+                raise AssertionError("Превышено количество попыток получения токена")
+            if token:
+                return token
+            time.sleep(1)
+
+    return wrapper
 
 
 class AccountHelper:
@@ -24,7 +45,6 @@ class AccountHelper:
         # Получить токен !!!!!!!!!!!
         activate_token = self.get_activation_token_by_login(login=login)
         assert activate_token is not None, f"Токен для пользователя {login} не был получен"
-
 
         # Активация пользователя
         if activated:
@@ -104,6 +124,7 @@ class AccountHelper:
         assert response.status_code == 204, f"Выход не был выполнен, {response.json()}"
         return response
 
+    @retry(stop_max_attempt_number=5, retry_on_result=retry_if_result_none, wait_fixed=1000)
     def get_activation_token_by_login(self, login):
         response = self.mail_hog.mailhog_api.get_api_v2_messages()
         token = None
