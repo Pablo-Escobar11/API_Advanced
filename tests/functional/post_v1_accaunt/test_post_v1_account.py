@@ -38,11 +38,12 @@ def test_v1_account():
 
     account_helper.register_new_user(login=login, password=password, email=email)
 
-    account_helper.user_login(login=login, password=password)
+    response = account_helper.user_login(login=login, password=password)
+    auth_token = get_auth_token_by_response(response=response)
 
     # Получение данных о пользователе
 
-    account_helper.get_user_info(password=password, login=login)
+    account_helper.get_user_info(auth_token=auth_token)
 
     # Сброс и смена пароля пользователя
     account_helper.reset_and_change_password(email=email, new_password=new_password, old_password=password, login=login)
@@ -51,9 +52,14 @@ def test_v1_account():
 
     response = account_helper.user_login(login=login, password=new_password)
     assert response.status_code == 200, f'Пользователь не авторизован {response.json()}'
-    auth_token = account_helper.get_auth_token_by_login(response=response)
 
 
     # Выход
-    account_helper.logaut_from_the_system(auth_token=auth_token)
+    account_helper.logout_from_the_system(auth_token=auth_token)
 
+
+def get_auth_token_by_response(response):
+    if 'X-Dm-Auth-Token' in response.headers:
+        return response.headers['X-Dm-Auth-Token']
+    else:
+        raise ValueError('Токен не найден в заголовках ответа')

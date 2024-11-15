@@ -8,6 +8,7 @@ from rest_client.configuration import Configuration as MailHogConfiguration
 from rest_client.configuration import Configuration as DmApiConfiguration
 from services.dm_api_account import DMApiAccount
 from services.api_mailhog import MailHogapi
+
 structlog.configure(
     processors=[structlog.processors.JSONRenderer(indent=4,
                                                   ensure_ascii=True,
@@ -36,8 +37,14 @@ def test_post_v1_account_login():
     account_helper.register_new_user(login=login, password=password, email=email)
     response = account_helper.user_login(login=login, password=password)
     assert response.status_code == 200, f'Пользователь не авторизован {response.json()}'
-    auth_token = account_helper.get_auth_token_by_login(response=response)
+    auth_token = get_auth_token_by_response(response=response)
 
     # Выход с аккаунта
-    account_helper.logaut_from_the_system(auth_token=auth_token)
+    account_helper.logout_from_the_system(auth_token=auth_token)
 
+
+def get_auth_token_by_response(response):
+    if 'X-Dm-Auth-Token' in response.headers:
+        return response.headers['X-Dm-Auth-Token']
+    else:
+        raise ValueError('Токен не найден в заголовках ответа')
