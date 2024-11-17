@@ -1,41 +1,13 @@
-import pprint
 import time
-from json import loads
-from datetime import datetime
-import structlog
-
-from helpers.account_helper import AccountHelper
-from rest_client.configuration import Configuration as MailHogConfiguration
-from rest_client.configuration import Configuration as DmApiConfiguration
-from services.dm_api_account import DMApiAccount
-from services.api_mailhog import MailHogapi
-
-structlog.configure(
-    processors=[structlog.processors.JSONRenderer(indent=4,
-                                                  ensure_ascii=True,
-                                                  # sort_keys=True
-                                                  )
-                ]
-)
-
-
-def test_put_v1_account_email():
-    mail_configuration = MailHogConfiguration(host='http://5.63.153.31:5025')
-    dm_api_configuration = DmApiConfiguration(host='http://5.63.153.31:5051', disable_log=False)
+def test_put_v1_account_email(account_helper, prepare_user):
     # Подготовка данных
-    account = DMApiAccount(configuration=dm_api_configuration)
-    mail_hog = MailHogapi(configuration=mail_configuration)
-
-    current_time = datetime.now()
-    formatted_time = current_time.strftime("%m_%d_%H_%M_%S")
-    login = f'pasha_{formatted_time}'
-    email = f'{login}@mail.ru'
-    password = 'Qwerty123'
-    new_email = f'new{email}'
+    login = prepare_user.login
+    email = prepare_user.email
+    password = prepare_user.password
+    new_email = prepare_user.new_email
 
     time.sleep(1)
     # Регистрация пользвателя
-    account_helper = AccountHelper(dm_account_api=account, mail_hog=mail_hog)
     account_helper.register_new_user(login=login, password=password, email=email, activated=False)
 
     # Смена почты

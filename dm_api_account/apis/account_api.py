@@ -29,17 +29,13 @@ class AccountApi(RestClient):
         response = self.put(path=f'/v1/account/{token}', headers=headers)
         return response
 
-    def get_v1_account(self, auth_token):
+    def get_v1_account(self, **kwargs):
         """
         GET
         /v1/account
         Get current user
         """
-        headers = {
-            'accept': 'text/plain',
-            'X-Dm-Auth-Token': auth_token
-        }
-        response = self.get(path=f'/v1/account/', headers=headers)
+        response = self.get(path=f'/v1/account/', **kwargs)
         return response
 
     def post_v1_account_password(self, json_data):
