@@ -59,7 +59,4 @@ def test_v1_account():
 
 
 def get_auth_token_by_response(response):
-    if 'X-Dm-Auth-Token' in response.headers:
-        return response.headers['X-Dm-Auth-Token']
-    else:
-        raise ValueError('Токен не найден в заголовках ответа')
+    return response.headers.get('X-Dm-Auth-Token') or ValueError('Токен не найден в заголовках ответа')
