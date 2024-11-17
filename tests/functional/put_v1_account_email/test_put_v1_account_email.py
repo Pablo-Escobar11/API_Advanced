@@ -9,6 +9,7 @@ from rest_client.configuration import Configuration as MailHogConfiguration
 from rest_client.configuration import Configuration as DmApiConfiguration
 from services.dm_api_account import DMApiAccount
 from services.api_mailhog import MailHogapi
+
 structlog.configure(
     processors=[structlog.processors.JSONRenderer(indent=4,
                                                   ensure_ascii=True,
@@ -52,3 +53,6 @@ def test_put_v1_account_email():
 
     assert response.status_code == 200, f'Пользователь не авторизован {response.json()}'
 
+
+def get_auth_token_by_response(response):
+    return response.headers.get('X-Dm-Auth-Token') or ValueError('Токен не найден в заголовках ответа')

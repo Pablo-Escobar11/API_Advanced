@@ -42,12 +42,11 @@ class AccountHelper:
         response = self.dm_account_api.account_api.post_v1_account(json_data=json_data)
         assert response.status_code == 201, f"Пользователь не был создан, {response.json()}"
 
-        # Получить токен !!!!!!!!!!!
-        activate_token = self.get_activation_token_by_login(login=login)
-        assert activate_token is not None, f"Токен для пользователя {login} не был получен"
-
         # Активация пользователя
         if activated:
+            # Получить токен !!!!!!!!!!!
+            activate_token = self.get_activation_token_by_login(login=login)
+            assert activate_token is not None, f"Токен для пользователя {login} не был получен"
             response = self.dm_account_api.account_api.put_v1_account_token(token=activate_token)
             assert response.status_code == 200, f'Пользователь не активен {response.json()}'
         return response
@@ -64,8 +63,7 @@ class AccountHelper:
         response = self.dm_account_api.login_api.post_v1_account_login(json_data=json_data)
         return response
 
-    def get_user_info(self, login: str, password: str):
-        auth_token = self.get_auth_token_by_login(self.user_login(login=login, password=password))
+    def get_user_info(self, auth_token):
         response = self.dm_account_api.account_api.get_v1_account(auth_token=auth_token)
         assert response.status_code == 200, f"Данные о пользователи не были получены {response.json()}"
         return response
@@ -81,7 +79,7 @@ class AccountHelper:
 
         # Получение токена
         response = self.mail_hog.mailhog_api.get_api_v2_messages()
-        reset_token = self.get_reset_password_token_by_login(response=response, login=login)
+        reset_token = self.get_reset_update_token_for_password_or_login(response=response, login=login)
 
         # Смена пароля пользователя
 
@@ -106,20 +104,21 @@ class AccountHelper:
         assert response.status_code == 200, f'Запрос на сброс почты не отправлен, {response.json()}'
         return response
 
+    #Метод для получения письма затем получения токена для активации смены почты и подтверждение новой почты
     def get_messages_and_confirm_new_email(self, login, new_email):
         # Получение письма
         response = self.mail_hog.mailhog_api.get_api_v2_messages()
         assert response.status_code == 200, f"Письма не были получены, {response.json()}"
 
         # Получение токена для почты
-        token = self.get_reset_token_for_email(login=login, response=response, email=new_email)
+        token = self.get_reset_update_token_for_password_or_login(login=login, response=response, email=new_email)
 
         # Подтверждение новой почты
-        response = self.dm_account_api.account_api.put_v1_account_token(token=token)
-        assert response.status_code == 200, f"Почта не иизменена, {response.json()}"
-        return response
+        response_activated_account = self.dm_account_api.account_api.put_v1_account_token(token=token)
+        assert response_activated_account.status_code == 200, f"Почта не иизменена, {response_activated_account.json()}"
+        return response_activated_account
 
-    def logaut_from_the_system(self, auth_token):
+    def logout_from_the_system(self, auth_token):
         response = self.dm_account_api.login_api.delete_v1_account_login(auth_token=auth_token)
         assert response.status_code == 204, f"Выход не был выполнен, {response.json()}"
         return response
@@ -135,28 +134,23 @@ class AccountHelper:
                 token = user_data['ConfirmationLinkUrl'].split('/')[-1]
             return token
 
-    def get_auth_token_by_login(self, response):
-        if 'X-Dm-Auth-Token' in response.headers:
-            return response.headers['X-Dm-Auth-Token']
-        else:
-            print('There is no token in headers')
-
     @staticmethod
-    def get_reset_password_token_by_login(login, response):
+    def get_reset_update_token_for_password_or_login(login, response, email=None):
         token = None
         for item in response.json()['items']:
             user_data = loads(item['Content']['Body'])
             user_login = user_data['Login']
-            if user_login == login and user_data.get('ConfirmationLinkUri'):
-                token = user_data['ConfirmationLinkUri'].split('/')[-1]
-            return token
 
-    @staticmethod
-    def get_reset_token_for_email(login, response, email):
-        token = None
-        for item in response.json()['items']:
-            user_data = loads(item['Content']['Body'])
-            user_login = user_data['Login']
-            if user_login == login and email == item['Content']['Headers']['To'][0]:
-                token = user_data['ConfirmationLinkUrl'].split('/')[-1]
-            return token
+            if email:
+                # Логика для проверки email, для подтверждения смены почты
+                if user_login == login and email == item['Content']['Headers']['To'][0]:
+                    token = user_data['ConfirmationLinkUrl'].split('/')[-1]
+            else:
+                # Логика для проверки логина, для смены пароля
+                if user_login == login and user_data.get('ConfirmationLinkUri'):
+                    token = user_data['ConfirmationLinkUri'].split('/')[-1]
+
+            if token:
+                break
+
+        return token
