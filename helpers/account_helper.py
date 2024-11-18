@@ -82,6 +82,8 @@ class AccountHelper:
         return response
 
     def reset_and_change_password(self, login: str, email: str, old_password: str, new_password):
+        response = self.user_login(login=login, password=old_password)
+        auth_token = response.headers.get('X-Dm-Auth-Token') or ValueError('Токен не найден в заголовках ответа')
         # Сброс пароля пользователя
         json_data = {
             'login': login,
@@ -102,7 +104,7 @@ class AccountHelper:
             "oldPassword": old_password,
             "newPassword": new_password
         }
-        response = self.dm_account_api.account_api.put_v1_account_password(json=json_data)
+        response = self.dm_account_api.account_api.put_v1_account_password(json_data=json_data, auth_token=auth_token)
         return response
 
     # Смена почты

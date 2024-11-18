@@ -12,7 +12,6 @@ structlog.configure(
 def test_v1_account(account_helper, prepare_user):
     login = prepare_user.login
     password = prepare_user.password
-    new_password = prepare_user.new_password
     email = prepare_user.email
     # Регистрация пользователя!!!!!!!!!!!!!!!!!!!!!!!!!
 

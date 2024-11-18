@@ -53,19 +53,22 @@ class AccountApi(RestClient):
         response = self.post(path=f'/v1/account/password/', headers=headers, json=json_data)
         return response
 
-    def put_v1_account_password(self, **kwargs):
+    def put_v1_account_password(self, json_data, auth_token=None):
         """
         PUT
         /v1/account/password
         Change registered user password
+        :param auth_token:
         :param json_data:
         :return:
         """
 
-        # headers = {
-        #     'accept': 'text/plain',
-        # }
-        response = self.put(path=f'/v1/account/password/', **kwargs)
+        headers = {
+            'accept': 'text/plain',
+            'X-Dm-Auth-Token': auth_token
+
+        }
+        response = self.put(path=f'/v1/account/password/', json=json_data, headers=headers)
         return response
 
     def put_v1_account_email(self, json_data):
