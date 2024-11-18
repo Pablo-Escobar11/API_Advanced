@@ -66,12 +66,7 @@ class AccountHelper:
         return response
 
     def auth_client(self, login: str, password: str):
-        json_data = {
-            'login': login,
-            'password': password,
-        }
-
-        response = self.dm_account_api.login_api.post_v1_account_login(json_data=json_data)
+        response = self.user_login(login=login, password=password)
         auth_token = {
             'X-Dm-Auth-Token': response.headers['X-Dm-Auth-Token']}
         self.dm_account_api.login_api.set_headers(auth_token)
