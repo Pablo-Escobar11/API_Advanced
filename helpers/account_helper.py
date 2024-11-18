@@ -65,11 +65,10 @@ class AccountHelper:
         response = self.dm_account_api.login_api.post_v1_account_login(json_data=json_data)
         return response
 
-    def auth_client(self, login: str, password: str, remember_me: bool = True):
+    def auth_client(self, login: str, password: str):
         json_data = {
             'login': login,
             'password': password,
-            'rememberMe': remember_me,
         }
 
         response = self.dm_account_api.login_api.post_v1_account_login(json_data=json_data)
@@ -103,8 +102,7 @@ class AccountHelper:
             "oldPassword": old_password,
             "newPassword": new_password
         }
-        self.dm_account_api.account_api.put_v1_account_password(json_data=json_data)
-        assert response.status_code == 200, f"Пароль не был изменен, {response.json()}"
+        response = self.dm_account_api.account_api.put_v1_account_password(json=json_data)
         return response
 
     # Смена почты
@@ -132,9 +130,14 @@ class AccountHelper:
         assert response_activated_account.status_code == 200, f"Почта не иизменена, {response_activated_account.json()}"
         return response_activated_account
 
-    def logout_from_the_system(self, auth_token):
-        response = self.dm_account_api.login_api.delete_v1_account_login(auth_token=auth_token)
-        assert response.status_code == 204, f"Выход не был выполнен, {response.json()}"
+    #Выход из аккаунта
+    def logout_from_the_system(self):
+        response = self.dm_account_api.login_api.delete_v1_account_login()
+        return response
+
+    #Выход из аккаунта со всех устройств
+    def logout_from_the_system_all(self):
+        response = self.dm_account_api.login_api.delete_v1_account_login_all()
         return response
 
     @retrier

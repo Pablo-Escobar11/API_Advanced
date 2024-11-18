@@ -1,4 +1,16 @@
 import time
+
+import structlog
+
+structlog.configure(
+    processors=[structlog.processors.JSONRenderer(indent=4,
+                                                  ensure_ascii=True,
+                                                  # sort_keys=True
+                                                  )
+                ]
+)
+
+
 def test_put_v1_account_email(account_helper, prepare_user):
     # Подготовка данных
     login = prepare_user.login
@@ -24,7 +36,3 @@ def test_put_v1_account_email(account_helper, prepare_user):
     response = account_helper.user_login(login=login, password=password)
 
     assert response.status_code == 200, f'Пользователь не авторизован {response.json()}'
-
-
-def get_auth_token_by_response(response):
-    return response.headers.get('X-Dm-Auth-Token') or ValueError('Токен не найден в заголовках ответа')
