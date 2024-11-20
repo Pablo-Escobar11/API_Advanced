@@ -75,13 +75,14 @@ class AccountHelper:
         self.dm_account_api.login_api.set_headers(auth_token)
         self.dm_account_api.account_api.set_headers(auth_token)
 
-    def get_user_info(self):
-        response = self.dm_account_api.account_api.get_v1_account()
+    def get_user_info(self, **kwargs):
+        response = self.dm_account_api.account_api.get_v1_account(**kwargs)
         return response
 
     def reset_and_change_password(self, login: str, email: str, old_password: str, new_password):
         response = self.user_login(login=login, password=old_password)
-        auth_token = response.headers.get('X-Dm-Auth-Token') or ValueError('Токен не найден в заголовках ответа')
+        auth_token = response.headers.get('X-Dm-Auth-Token')
+        assert auth_token, 'Токен не найден в заголовках ответа'
         # Сброс пароля пользователя
         reset_credentials = ResetCredentials(
             login=login,
@@ -131,12 +132,19 @@ class AccountHelper:
         return response_activated_account
 
     #Выход из аккаунта
-    def logout_from_the_system(self):
-        response = self.dm_account_api.login_api.delete_v1_account_login()
+    def logout_from_the_system(self, **kwargs):
+        response = self.dm_account_api.login_api.delete_v1_account_login(**kwargs)
         return response
 
     #Выход из аккаунта со всех устройств
-    def logout_from_the_system_all(self):
+    # def logout_from_the_system_all(self):
+    #     response = self.dm_account_api.login_api.delete_v1_account_login_all()
+    #     return response
+    def logout_from_the_system_all(self, token=None):
+        if token:
+            headers = {'token': token}
+            response = self.dm_account_api.login_api.delete_v1_account_login_all(headers)
+            return response
         response = self.dm_account_api.login_api.delete_v1_account_login_all()
         return response
 
