@@ -27,20 +27,20 @@ def mailhog_api():
     return mail_hog_client
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def account_api():
     dm_api_configuration = DmApiConfiguration(host='http://5.63.153.31:5051', disable_log=False)
     account = DMApiAccount(configuration=dm_api_configuration)
     return account
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def account_helper(account_api, mailhog_api):
     account_helper = AccountHelper(dm_account_api=account_api, mail_hog=mailhog_api)
     return account_helper
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def auth_account_helper(mailhog_api):
     dm_api_configuration = DmApiConfiguration(host='http://5.63.153.31:5051', disable_log=False)
     account = DMApiAccount(configuration=dm_api_configuration)

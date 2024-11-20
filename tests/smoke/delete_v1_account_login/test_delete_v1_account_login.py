@@ -9,7 +9,6 @@ structlog.configure(
                                                   )
                 ]
 )
-sleep(3)
 
 
 def test_delete_v1_account_login(auth_account_helper):
