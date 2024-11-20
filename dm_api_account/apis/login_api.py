@@ -1,19 +1,21 @@
 import requests
 
+from dm_api_account.models.login_credentials import LoginCredentials
 from rest_client.client import RestClient
 
 
 class LoginApi(RestClient):
 
-    def post_v1_account_login(self, json_data):
+    def post_v1_account_login(self, login_credentials: LoginCredentials):
         """
         POST
         /v1/account/login
         Authenticate via credentials
+        :param login_credentials:
         :param json_data:
         :return:
         """
-        response = self.post(path=f'/v1/account/login', json=json_data)
+        response = self.post(path=f'/v1/account/login', json=login_credentials.model_dump(exclude_none=True, by_alias=True))
         return response
 
     def delete_v1_account_login(self, **kwargs):

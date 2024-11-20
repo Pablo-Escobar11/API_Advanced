@@ -1,6 +1,9 @@
 import time
 from json import loads
 
+from dm_api_account.models.login_credentials import LoginCredentials
+from dm_api_account.models.registration import Registration
+from dm_api_account.models.reset_credentials import ResetCredentials
 from services.dm_api_account import DMApiAccount
 from services.api_mailhog import MailHogapi
 
@@ -34,14 +37,14 @@ class AccountHelper:
         self.mail_hog = mail_hog
 
     def register_new_user(self, login: str, password: str, email: str, activated: bool = True):
-        json_data = {
-            'login': login,
-            'email': email,
-            'password': password,
-        }
+        registration = Registration(
+            login=login,
+            email=email,
+            password=password,
+        )
         time.sleep(1)
         # Регистрация пользователя!!!!!!!!!!!!!!!!!!!!!!!!!
-        response = self.dm_account_api.account_api.post_v1_account(json_data=json_data)
+        response = self.dm_account_api.account_api.post_v1_account(registration=registration)
         assert response.status_code == 201, f"Пользователь не был создан, {response.json()}"
 
         # Активация пользователя
@@ -56,13 +59,13 @@ class AccountHelper:
     def user_login(self, login: str, password: str, remember_me: bool = True):
         # Авторизация !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        json_data = {
-            'login': login,
-            'password': password,
-            'rememberMe': remember_me,
-        }
+        login_credentials = LoginCredentials(
+            login=login,
+            password=password,
+            rememberMe=remember_me,
+        )
 
-        response = self.dm_account_api.login_api.post_v1_account_login(json_data=json_data)
+        response = self.dm_account_api.login_api.post_v1_account_login(login_credentials=login_credentials)
         return response
 
     def auth_client(self, login: str, password: str):
@@ -80,11 +83,11 @@ class AccountHelper:
         response = self.user_login(login=login, password=old_password)
         auth_token = response.headers.get('X-Dm-Auth-Token') or ValueError('Токен не найден в заголовках ответа')
         # Сброс пароля пользователя
-        json_data = {
-            'login': login,
-            'email': email
-        }
-        response = self.dm_account_api.account_api.post_v1_account_password(json_data=json_data)
+        reset_credentials = ResetCredentials(
+            login=login,
+            email=email
+        )
+        response = self.dm_account_api.account_api.post_v1_account_password(reset_credentials=reset_credentials)
         assert response.status_code == 200
 
         # Получение токена
