@@ -3,6 +3,8 @@ from json import loads
 
 from services.dm_api_account import DMApiAccount
 from services.api_mailhog import MailHogapi
+
+
 # from retrying import retry
 #
 #
@@ -63,12 +65,21 @@ class AccountHelper:
         response = self.dm_account_api.login_api.post_v1_account_login(json_data=json_data)
         return response
 
-    def get_user_info(self, auth_token):
-        response = self.dm_account_api.account_api.get_v1_account(auth_token=auth_token)
-        assert response.status_code == 200, f"Данные о пользователи не были получены {response.json()}"
+    def auth_client(self, login: str, password: str):
+        response = self.user_login(login=login, password=password)
+        auth_token = {
+            'X-Dm-Auth-Token': response.headers['X-Dm-Auth-Token']}
+        self.dm_account_api.login_api.set_headers(auth_token)
+        self.dm_account_api.account_api.set_headers(auth_token)
+
+    def get_user_info(self, **kwargs):
+        response = self.dm_account_api.account_api.get_v1_account(**kwargs)
         return response
 
     def reset_and_change_password(self, login: str, email: str, old_password: str, new_password):
+        response = self.user_login(login=login, password=old_password)
+        auth_token = response.headers.get('X-Dm-Auth-Token')
+        assert auth_token, 'Токен не найден в заголовках ответа'
         # Сброс пароля пользователя
         json_data = {
             'login': login,
@@ -89,8 +100,7 @@ class AccountHelper:
             "oldPassword": old_password,
             "newPassword": new_password
         }
-        self.dm_account_api.account_api.put_v1_account_password(json_data=json_data)
-        assert response.status_code == 200, f"Пароль не был изменен, {response.json()}"
+        response = self.dm_account_api.account_api.put_v1_account_password(json_data=json_data, auth_token=auth_token)
         return response
 
     # Смена почты
@@ -118,10 +128,23 @@ class AccountHelper:
         assert response_activated_account.status_code == 200, f"Почта не иизменена, {response_activated_account.json()}"
         return response_activated_account
 
-    def logout_from_the_system(self, auth_token):
-        response = self.dm_account_api.login_api.delete_v1_account_login(auth_token=auth_token)
-        assert response.status_code == 204, f"Выход не был выполнен, {response.json()}"
+    #Выход из аккаунта
+    def logout_from_the_system(self, **kwargs):
+        response = self.dm_account_api.login_api.delete_v1_account_login(**kwargs)
         return response
+
+    #Выход из аккаунта со всех устройств
+    # def logout_from_the_system_all(self):
+    #     response = self.dm_account_api.login_api.delete_v1_account_login_all()
+    #     return response
+    def logout_from_the_system_all(self, token=None):
+        if token:
+            headers = {'token': token}
+            response = self.dm_account_api.login_api.delete_v1_account_login_all(headers)
+            return response
+        response = self.dm_account_api.login_api.delete_v1_account_login_all()
+        return response
+
     @retrier
     # @retry(stop_max_attempt_number=5, retry_on_result=retry_if_result_none, wait_fixed=1000)
     def get_activation_token_by_login(self, login):
