@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel, \
@@ -9,7 +9,7 @@ from pydantic import BaseModel, \
     Field
 
 
-class UserRoles(str, Enum):
+class UserRole(str, Enum):
     """[ Guest, Player, Administrator, NannyModerator, RegularModerator, SeniorModerator ]"""
     GUEST = 'Guest'
     PLAYER = 'Player'
@@ -27,15 +27,15 @@ class Rating(BaseModel):
 
 class User(BaseModel):
     login: str
-    roles: List[UserRoles]
-    medium_picture_url: str = Field(..., alias='mediumPictureUrl')
-    small_picture_url: str = Field(..., alias='smallPictureUrl')
-    status: str
+    roles: List[UserRole]
+    medium_picture_url: str = Field(None, alias='mediumPictureUrl')
+    small_picture_url: str = Field(None, alias='smallPictureUrl')
+    status: str = Field(None, alias='status')
     rating: Rating
-    online: datetime
-    name: str
-    location: str
-    registration: datetime
+    online: datetime = Field(None, alias='online')
+    name: str = Field(None, alias='name')
+    location: str = Field(None, alias='location')
+    registration: datetime = Field(None, alias='registration')
 
 
 class UserEnvelope(BaseModel):
