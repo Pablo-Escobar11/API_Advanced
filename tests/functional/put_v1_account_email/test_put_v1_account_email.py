@@ -1,6 +1,7 @@
 import time
 
 import structlog
+from checkers.http_checkers import check_status_code_http
 
 structlog.configure(
     processors=[structlog.processors.JSONRenderer(indent=4,
@@ -26,8 +27,8 @@ def test_put_v1_account_email(account_helper, prepare_user):
     account_helper.change_register_user_email(new_email=new_email, password=password, login=login)
 
     # Логин пользвателя в систему после смены почты
-    response = account_helper.user_login(login=login, password=password)
-    assert response.status_code == 403, f'Пользователь авторизован {response.json()}'
+    with check_status_code_http(403, 'User is inactive. Address the technical support for more details'):
+        account_helper.user_login(login=login, password=password)
 
     # Получение письма и подтверждение новой почты
     account_helper.get_messages_and_confirm_new_email(login=login, new_email=new_email)

@@ -52,7 +52,10 @@ def test_post_v1_account(account_helper, prepare_user):
 
 
 @pytest.mark.parametrize('login, email, password, error_message, incorrect_field', [
-    ('pasha_test3345@mail.com', 'test@mail.ru', 'Qwert', 'Short', 'Password')
+    ('pasha_test3345', 'test@mail.com', 'Qwert', 'Short', 'Password'),
+    ('pasha_test3345', 'testmail.com', 'Qwert123', 'Invalid', 'Email'),
+    ('p', 'test@mail.com', 'Qwert123', 'Short', 'Login')
+
 ])
 def test_post_v1_account_with_incorrect_data(account_helper, login, email, password, error_message, incorrect_field):
     with check_status_code_http_and_error(400, error_message, incorrect_field):

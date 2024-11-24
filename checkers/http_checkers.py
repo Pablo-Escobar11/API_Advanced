@@ -23,5 +23,6 @@ def check_status_code_http_and_error(
     try:
         yield
     except HTTPError as err:
-        assert err.response.status_code == expected_status_code
-        assert err.response.json()['errors'][field][0] == expected_message
+        assert err.response.status_code == expected_status_code, f"статус код ответа {err.response.status_code}"
+        assert err.response.json()['errors'][field][0] == expected_message, \
+            f"Некорректное поле с ошибкой {err.response.json()['errors'][field][0]}"

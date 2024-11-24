@@ -1,5 +1,4 @@
-from time import sleep
-
+from checkers.http_checkers import check_status_code_http
 import structlog
 
 structlog.configure(
@@ -17,5 +16,5 @@ def test_delete_v1_account_login(auth_account_helper):
 
 
 def test_delete_v1_account_login_without_auth(account_helper):
-    response = account_helper.logout_from_the_system()
-    assert response.status_code == 401, "Выход выполнен для не авторизованного пользователя"
+    with check_status_code_http(401, 'User must be authenticated'):
+        account_helper.logout_from_the_system()
