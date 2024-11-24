@@ -57,7 +57,8 @@ class AccountHelper:
             response = self.dm_account_api.account_api.put_v1_account_token(token=activate_token)
         return response
 
-    def user_login(self, login: str, password: str, remember_me: bool = True, validate_response=False):
+    def user_login(self, login: str, password: str, remember_me: bool = True, validate_response=False,
+                   validate_headers=False):
         # Авторизация !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         login_credentials = LoginCredentials(
@@ -68,6 +69,10 @@ class AccountHelper:
 
         response = self.dm_account_api.login_api.post_v1_account_login(login_credentials=login_credentials,
                                                                        validate_response=validate_response)
+        if validate_headers:
+            assert response.headers['X-Dm-Auth-Token'], "Токен для пользователя не был получен"
+            assert response.status_code == 200, 'Пользователь не создан'
+
         return response
 
     def auth_client(self, login: str, password: str):
