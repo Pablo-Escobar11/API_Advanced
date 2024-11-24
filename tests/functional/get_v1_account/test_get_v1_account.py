@@ -1,5 +1,6 @@
-import structlog
 from datetime import datetime
+
+from checkers.http_checkers import check_status_code_http
 from dm_api_account.models.user_envelope import UserRole
 from hamcrest import assert_that, \
     has_property, \
@@ -9,21 +10,11 @@ from hamcrest import assert_that, \
     has_properties, \
     equal_to, \
     only_contains, \
-    greater_than_or_equal_to, \
-    has_value
-
-structlog.configure(
-    processors=[structlog.processors.JSONRenderer(indent=4,
-                                                  ensure_ascii=True,
-                                                  # sort_keys=True
-                                                  )
-                ]
-)
+    greater_than_or_equal_to
 
 
 def test_get_v1_account_auth(auth_account_helper):
     response = auth_account_helper.get_user_info(validate_response=True)
-    print(response)
     assert_that(
         response, all_of(
             has_property('resource',
@@ -53,6 +44,6 @@ def test_get_v1_account_auth(auth_account_helper):
 
 
 def test_get_v1_account_no_auth(account_helper):
-    response = account_helper.get_user_info()
-    assert response.status_code == 401, (f"Данные о пользователи получены, однако пользователь не авторизован,"
-                                         f" {response.json()}")
+    with check_status_code_http(401, 'User must be authenticated'):
+        account_helper.get_user_info()
+
