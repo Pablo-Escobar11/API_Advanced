@@ -1,3 +1,4 @@
+import allure
 import pytest
 import structlog
 from checkers.http_checkers import check_status_code_http_and_error
@@ -12,6 +13,8 @@ structlog.configure(
 )
 
 
+@allure.suite('Тесты на проверку метода POST v1/account')
+@allure.sub_suite('Проверка регистрации нового пользователя Позитивный и негативный тест')
 def test_post_v1_account(account_helper, prepare_user):
     login = prepare_user.login
     password = prepare_user.password
