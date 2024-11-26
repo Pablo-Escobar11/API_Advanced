@@ -71,7 +71,6 @@ class AccountHelper:
                                                                        validate_response=validate_response)
         if validate_headers:
             assert response.headers['X-Dm-Auth-Token'], "Токен для пользователя не был получен"
-            assert response.status_code == 200, 'Пользователь не создан'
 
         return response
 

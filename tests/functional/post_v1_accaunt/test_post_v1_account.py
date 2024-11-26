@@ -1,3 +1,4 @@
+import pytest
 import structlog
 from hamcrest import assert_that, \
     has_property, \
@@ -8,6 +9,8 @@ from hamcrest import assert_that, \
     equal_to, \
     only_contains
 from datetime import datetime
+
+from checkers.http_checkers import check_status_code_http_and_error
 
 structlog.configure(
     processors=[structlog.processors.JSONRenderer(indent=4,
@@ -46,3 +49,14 @@ def test_post_v1_account(account_helper, prepare_user):
                          )
         )
     )
+
+
+@pytest.mark.parametrize('login, email, password, error_message, incorrect_field', [
+    ('pasha_test3345', 'test@mail.com', 'Qwert', 'Short', 'Password'),
+    ('pasha_test3345', 'testmail.com', 'Qwert123', 'Invalid', 'Email'),
+    ('p', 'test@mail.com', 'Qwert123', 'Short', 'Login')
+
+])
+def test_post_v1_account_with_incorrect_data(account_helper, login, email, password, error_message, incorrect_field):
+    with check_status_code_http_and_error(400, error_message, incorrect_field):
+        account_helper.register_new_user(login=login, password=password, email=email, activated=False)
