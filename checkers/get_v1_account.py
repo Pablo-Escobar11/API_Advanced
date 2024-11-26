@@ -13,7 +13,7 @@ from dm_api_account.models.user_envelope import UserRole
 
 class GetV1Account:
     @classmethod
-    def check_response_value_get_v1_account(cls, response):
+    def check_response_value(cls, response):
         assert_that(
             response, all_of(
                 has_property('resource',
