@@ -1,6 +1,8 @@
 import time
 from json import loads
 
+import allure
+
 from dm_api_account.models.login_credentials import LoginCredentials
 from dm_api_account.models.new_password_credentials import NewPasswordCredentials
 from dm_api_account.models.registration import Registration
@@ -38,6 +40,7 @@ class AccountHelper:
         self.dm_account_api = dm_account_api
         self.mail_hog = mail_hog
 
+    @allure.step('Регистрация нового пользователя')
     def register_new_user(self, login: str, password: str, email: str, activated: bool = True, validate_response=False):
         registration = Registration(
             login=login,
@@ -57,9 +60,11 @@ class AccountHelper:
             response = self.dm_account_api.account_api.put_v1_account_token(token=activate_token)
         return response
 
-    def user_login(self, login: str, password: str, remember_me: bool = True, validate_response=False,
-                   validate_headers=False):
-        # Авторизация !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    @allure.step("Вход пользователя в систему")
+    def user_login(
+            self, login: str, password: str, remember_me: bool = True, validate_response=False,
+            validate_headers=False
+    ):
 
         login_credentials = LoginCredentials(
             login=login,
@@ -74,6 +79,7 @@ class AccountHelper:
 
         return response
 
+    @allure.step('Авторизация пользователя и установка токена в хэдэры')
     def auth_client(self, login: str, password: str):
         response = self.user_login(login=login, password=password)
         auth_token = {
@@ -81,11 +87,15 @@ class AccountHelper:
         self.dm_account_api.login_api.set_headers(auth_token)
         self.dm_account_api.account_api.set_headers(auth_token)
 
+    @allure.step('Получение информации о пользователе')
     def get_user_info(self, validate_response=False, **kwargs):
         response = self.dm_account_api.account_api.get_v1_account(validate_response=validate_response, **kwargs)
         return response
 
-    def reset_and_change_password(self, login: str, email: str, old_password: str, new_password, validate_response=False):
+    @allure.step('Сброс и смена пароля')
+    def reset_and_change_password(
+            self, login: str, email: str, old_password: str, new_password, validate_response=False
+    ):
         response = self.user_login(login=login, password=old_password)
         auth_token = response.headers.get('X-Dm-Auth-Token')
         assert auth_token, 'Токен не найден в заголовках ответа'
@@ -108,11 +118,12 @@ class AccountHelper:
             oldPassword=old_password,
             newPassword=new_password
         )
-        response = self.dm_account_api.account_api.put_v1_account_password(new_password_credentials=new_password_credentials,
-                                                                           auth_token=auth_token)
+        response = self.dm_account_api.account_api.put_v1_account_password(
+            new_password_credentials=new_password_credentials,
+            auth_token=auth_token)
         return response
 
-    # Смена почты
+    @allure.step('Смена пароля для зарегестрированного пользователя')
     def change_register_user_email(self, login, password, new_email):
         reset_email = ResetEmail(
             login=login,
@@ -123,6 +134,7 @@ class AccountHelper:
         return response
 
     #Метод для получения письма затем получения токена для активации смены почты и подтверждение новой почты
+    @allure.step('Получение письма и смена почты')
     def get_messages_and_confirm_new_email(self, login, new_email):
         # Получение письма
         response = self.mail_hog.mailhog_api.get_api_v2_messages()
@@ -135,18 +147,16 @@ class AccountHelper:
         response_activated_account = self.dm_account_api.account_api.put_v1_account_token(token=token)
         return response_activated_account
 
-    #Выход из аккаунта
+    @allure.step('Выход с аккаунта')
     def logout_from_the_system(self, **kwargs):
         response = self.dm_account_api.login_api.delete_v1_account_login(**kwargs)
         return response
 
-    #Выход из аккаунта со всех устройств
-    # def logout_from_the_system_all(self):
-    #     response = self.dm_account_api.login_api.delete_v1_account_login_all()
-    #     return response
+    @allure.step('Выход с аккаунта со всех устройств')
     def logout_from_the_system_all(self, token=None):
         if token:
-            headers = {'token': token}
+            headers = {
+                'token': token}
             response = self.dm_account_api.login_api.delete_v1_account_login_all(headers)
             return response
         response = self.dm_account_api.login_api.delete_v1_account_login_all()
