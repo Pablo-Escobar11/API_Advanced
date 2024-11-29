@@ -41,7 +41,7 @@ class AccountHelper:
         self.mail_hog = mail_hog
 
     @allure.step('Регистрация нового пользователя')
-    def register_new_user(self, login: str, password: str, email: str, activated: bool = True, validate_response=False):
+    def register_new_user(self, login: str, password: str, email: str, activated: bool = True):
         registration = Registration(
             login=login,
             email=email,
@@ -94,7 +94,7 @@ class AccountHelper:
 
     @allure.step('Сброс и смена пароля')
     def reset_and_change_password(
-            self, login: str, email: str, old_password: str, new_password, validate_response=False
+            self, login: str, email: str, old_password: str, new_password
     ):
         response = self.user_login(login=login, password=old_password)
         auth_token = response.headers.get('X-Dm-Auth-Token')

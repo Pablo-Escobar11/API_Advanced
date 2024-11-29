@@ -32,6 +32,6 @@ def allure_attach(fn):
                 name='response_body',
                 attachment_type=allure.attachment_type.JSON,
             )
-        return response
+        return response.json()
 
     return wrapper
