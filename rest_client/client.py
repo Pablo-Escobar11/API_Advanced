@@ -69,6 +69,6 @@ class RestClient:
     @staticmethod
     def _get_json(rest_response):
         try:
-            return rest_response
+            return rest_response.json()
         except JSONDecodeError:
             return {}
